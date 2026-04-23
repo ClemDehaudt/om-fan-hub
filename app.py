@@ -490,6 +490,198 @@ div[data-testid="stRadio"] > label {
     border-top: 1px solid var(--border);
     margin: 1.2rem 0;
 }
+
+/* ── Pricing ── */
+.pricing-header {
+    text-align: center;
+    padding: 1rem 0 2rem;
+}
+.pricing-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 2.4rem;
+    font-weight: 900;
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1;
+}
+.pricing-subtitle {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.4rem;
+}
+.toggle-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-top: 1.2rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--grey);
+}
+.save-badge {
+    background: rgba(0,155,222,0.15);
+    border: 1px solid var(--blue);
+    border-radius: 99px;
+    padding: 0.1rem 0.6rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--blue);
+    letter-spacing: 0.1em;
+}
+.pricing-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem 1.8rem;
+    height: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+.pricing-card.featured {
+    border-color: var(--blue);
+    box-shadow: 0 0 40px rgba(0,155,222,0.2), inset 0 0 60px rgba(0,155,222,0.03);
+}
+.most-popular-badge {
+    position: absolute;
+    top: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--blue);
+    color: var(--white);
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 0.25rem 1rem;
+    border-radius: 0 0 8px 8px;
+}
+.plan-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.6rem;
+}
+.plan-price {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 3.2rem;
+    font-weight: 900;
+    color: var(--blue);
+    line-height: 1;
+    letter-spacing: -0.01em;
+}
+.plan-price span {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0;
+}
+.plan-price-custom {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: var(--blue);
+    line-height: 1;
+}
+.plan-desc {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin: 0.4rem 0 1.2rem;
+}
+.plan-divider {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin: 1rem 0 0.8rem;
+}
+.plan-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.82rem;
+    color: var(--grey);
+    margin-bottom: 0.55rem;
+    line-height: 1.4;
+}
+.plan-feature .check {
+    color: var(--blue);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+}
+.plan-feature .icon {
+    font-size: 0.85rem;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+}
+.plan-cta-primary {
+    display: block;
+    width: 100%;
+    background: var(--blue);
+    color: var(--white);
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-top: auto;
+    box-shadow: 0 4px 20px rgba(0,155,222,0.35);
+    cursor: pointer;
+}
+.plan-cta-secondary {
+    display: block;
+    width: 100%;
+    background: transparent;
+    color: var(--grey);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-top: auto;
+    cursor: pointer;
+}
+.faq-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 0.7rem;
+}
+.faq-q {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--white);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.3rem;
+}
+.faq-a {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.55;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -556,10 +748,11 @@ BARS = pd.DataFrame([
 # ─────────────────────────────────────────────────────────────────────────────
 # TABS
 # ─────────────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "🚇  Smart Transport",
     "🍺  Bar Finder",
     "📊  Live Match Stats",
+    "💳  Pricing",
 ])
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -838,3 +1031,136 @@ with tab3:
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB 4 — PRICING
+# ══════════════════════════════════════════════════════════════════════════════
+with tab4:
+
+    # ── Billing toggle ────────────────────────────────────────────────────────
+    st.markdown("""
+    <div class="pricing-header">
+        <div class="pricing-title">Simple, Transparent Pricing</div>
+        <div class="pricing-subtitle">Start free. Upgrade when you're ready.</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    _, toggle_col, _ = st.columns([2, 1, 2])
+    with toggle_col:
+        billing = st.radio(
+            "Billing cycle",
+            options=["Monthly", "Annually"],
+            horizontal=True,
+            label_visibility="collapsed",
+        )
+
+    annually = billing == "Annually"
+    discount_note = "&nbsp; <span class='save-badge'>SAVE 20%</span>" if annually else ""
+
+    st.markdown(f"""
+    <div class="toggle-wrap" style="margin-top:-0.5rem;margin-bottom:1.5rem">
+        <span style="color:{'var(--white)' if not annually else 'var(--muted)'}">Monthly</span>
+        <span style="color:var(--muted)">·</span>
+        <span style="color:{'var(--white)' if annually else 'var(--muted)'}">Annually{discount_note}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Prices ────────────────────────────────────────────────────────────────
+    pro_price  = "€3.19" if annually else "€3.99"
+    pro_period = "/month, billed annually" if annually else "/month"
+
+    # ── Three columns ─────────────────────────────────────────────────────────
+    c1, c2, c3 = st.columns(3, gap="large")
+
+    with c1:
+        st.markdown(f"""
+        <div class="pricing-card">
+            <div class="plan-name">Free</div>
+            <div class="plan-price">€0<span> /month</span></div>
+            <div class="plan-desc">Perfect to get started on matchday</div>
+            <hr class="blue-divider">
+            <div class="plan-divider">Included features</div>
+            <div class="plan-feature"><span class="check">✔</span> Basic transport recommendations</div>
+            <div class="plan-feature"><span class="check">✔</span> Bar finder with crowd levels</div>
+            <div class="plan-feature"><span class="check">✔</span> Casual live match stats</div>
+            <div class="plan-feature"><span class="check">✔</span> Matchday tips &amp; alerts</div>
+            <br>
+            <div class="plan-cta-secondary">Get Started Free</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with c2:
+        st.markdown(f"""
+        <div class="pricing-card featured">
+            <div class="most-popular-badge">Most Popular</div>
+            <div class="plan-name" style="margin-top:0.6rem">Pro</div>
+            <div class="plan-price">{pro_price}<span> {pro_period}</span></div>
+            <div class="plan-desc">For the passionate OM supporter</div>
+            <hr class="blue-divider">
+            <div class="plan-divider">Everything in Free, plus:</div>
+            <div class="plan-feature"><span class="check">✔</span> <strong style="color:var(--white)">Chant guide</strong> — learn every song</div>
+            <div class="plan-feature"><span class="check">✔</span> <strong style="color:var(--white)">Fan chat</strong> — live supporter forum</div>
+            <div class="plan-feature"><span class="check">✔</span> <strong style="color:var(--white)">Expert stats</strong> — xG, heatmaps, ratings</div>
+            <div class="plan-feature"><span class="check">✔</span> <strong style="color:var(--white)">Priority routing</strong> — real-time crowds</div>
+            <div class="plan-feature"><span class="check">✔</span> <strong style="color:var(--white)">AI match analyst</strong> — live commentary</div>
+            <br>
+            <div class="plan-cta-primary">Start Pro →</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with c3:
+        st.markdown(f"""
+        <div class="pricing-card">
+            <div class="plan-name">Business</div>
+            <div class="plan-price-custom">Custom</div>
+            <div class="plan-desc">For venues, bars &amp; partner organisations</div>
+            <hr class="blue-divider">
+            <div class="plan-divider">Everything in Pro, plus:</div>
+            <div class="plan-feature"><span class="icon">📊</span> <strong style="color:var(--white)">Bar dashboard</strong> — manage your crowd page</div>
+            <div class="plan-feature"><span class="icon">📣</span> <strong style="color:var(--white)">Matchday ads</strong> — reach fans before kickoff</div>
+            <div class="plan-feature"><span class="icon">📈</span> <strong style="color:var(--white)">Analytics</strong> — foot traffic &amp; peak hours</div>
+            <div class="plan-feature"><span class="icon">🎧</span> <strong style="color:var(--white)">Dedicated support</strong> — priority onboarding</div>
+            <div class="plan-feature"><span class="icon">🔗</span> <strong style="color:var(--white)">API access</strong> — integrate with your systems</div>
+            <br>
+            <div class="plan-cta-secondary">Contact Us</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ── Feature comparison table ───────────────────────────────────────────────
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-label">Full Feature Comparison</div>', unsafe_allow_html=True)
+
+    comparison = {
+        "Feature":                    ["Smart Transport", "Bar Finder", "Live Stats", "Expert xG & Heatmaps",
+                                       "Fan Chat", "Chant Guide", "AI Match Analyst", "Bar Dashboard",
+                                       "Matchday Ads", "API Access"],
+        "Free":                       ["✔", "✔", "Basic", "—", "—", "—", "—", "—", "—", "—"],
+        "Pro":                        ["✔", "✔", "Full", "✔", "✔", "✔", "✔", "—", "—", "—"],
+        "Business":                   ["✔", "✔", "Full", "✔", "✔", "✔", "✔", "✔", "✔", "✔"],
+    }
+    import pandas as pd
+    comp_df = pd.DataFrame(comparison)
+    st.dataframe(comp_df, use_container_width=True, hide_index=True)
+
+    # ── FAQ ───────────────────────────────────────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-label">FAQ</div>', unsafe_allow_html=True)
+
+    faqs = [
+        ("Can I cancel anytime?",
+         "Yes. Pro subscriptions can be cancelled at any time from your account settings. "
+         "You keep access until the end of your billing period."),
+        ("Is there a free trial for Pro?",
+         "Absolutely — new users get 14 days of Pro for free, no credit card required."),
+        ("What payment methods do you accept?",
+         "We accept Visa, Mastercard, and PayPal. Business plans can be invoiced monthly."),
+        ("How does the annual discount work?",
+         "Choosing annual billing gives you 2 months free — you pay for 10 months and get 12."),
+    ]
+    for q, a in faqs:
+        st.markdown(f"""
+        <div class="faq-item">
+            <div class="faq-q">Q — {q}</div>
+            <div class="faq-a">{a}</div>
+        </div>
+        """, unsafe_allow_html=True)
