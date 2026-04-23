@@ -1,5 +1,7 @@
 import streamlit as st
 import pandas as pd
+from datetime import datetime
+import time
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -7,6 +9,17 @@ st.set_page_config(
     page_icon="⚽",
     layout="wide",
 )
+
+# ── Session state init ────────────────────────────────────────────────────────
+if "chat_messages" not in st.session_state:
+    st.session_state.chat_messages = [
+        {"name": "Karim B.",      "quartier": "Noailles",     "time": "20:14", "msg": "ALLEEEZ L'OM 🔵⚪ Le Vélodrome est en feu ce soir !"},
+        {"name": "Yasmine R.",    "quartier": "Castellane",   "time": "20:15", "msg": "Aubameyang en feu depuis 10 minutes, je sens le but venir 🔥"},
+        {"name": "Thomas D.",     "quartier": "Vieux-Port",   "time": "20:17", "msg": "Le Virage Nord est incroyable ce soir, ambiance de folie 🎤"},
+        {"name": "Sofia M.",      "quartier": "Baille",       "time": "20:19", "msg": "2-1 !! OUIIIII on y croooit !! Droit au but les gars 💪"},
+        {"name": "Mehdi C.",      "quartier": "La Plaine",    "time": "20:21", "msg": "PSG ils peuvent rentrer chez eux lol. Velodrome = forteresse 🏟️"},
+        {"name": "Julie F.",      "quartier": "Cours Julien", "time": "20:23", "msg": "Quelqu'un sait si le bus 21 tourne encore après le match ? 🚌"},
+    ]
 
 # ── Global CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -29,7 +42,6 @@ st.markdown("""
     --red:       #f44336;
 }
 
-/* ── Reset ── */
 html, body, [class*="css"] {
     font-family: 'Barlow', sans-serif;
     background-color: var(--bg) !important;
@@ -39,11 +51,47 @@ html, body, [class*="css"] {
 #MainMenu, footer, header { visibility: hidden; }
 .block-container { padding-top: 1.5rem; padding-bottom: 3rem; max-width: 1200px; }
 
-/* ── Header ── */
-.app-header {
-    text-align: center;
-    padding: 2rem 0 1rem;
+/* ── Logo badge ── */
+.om-logo-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.6rem;
 }
+.om-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #1B3A5C 0%, #0d1a2e 100%);
+    border: 2px solid #009BDE;
+    box-shadow: 0 0 24px rgba(0,155,222,0.35), inset 0 0 20px rgba(0,155,222,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.om-logo-om {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #009BDE;
+    letter-spacing: 0.05em;
+    line-height: 1;
+    text-shadow: 0 0 12px rgba(0,155,222,0.7);
+}
+.om-logo-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.38rem;
+    font-weight: 800;
+    color: #c0c0ee;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-top: 0.1rem;
+}
+
+/* ── Header ── */
+.app-header { text-align: center; padding: 1.5rem 0 0.8rem; }
 .app-title {
     font-family: 'Barlow Condensed', sans-serif;
     font-size: 4.5rem;
@@ -81,26 +129,23 @@ html, body, [class*="css"] {
 }
 [data-testid="stTabs"] [role="tab"] {
     font-family: 'Barlow Condensed', sans-serif !important;
-    font-size: 0.9rem !important;
+    font-size: 0.85rem !important;
     font-weight: 700 !important;
-    letter-spacing: 0.12em !important;
+    letter-spacing: 0.1em !important;
     text-transform: uppercase !important;
     color: var(--muted) !important;
     background: transparent !important;
     border: none !important;
     border-bottom: 3px solid transparent !important;
-    padding: 0.7rem 1.4rem !important;
+    padding: 0.7rem 1.1rem !important;
     border-radius: 0 !important;
-    transition: color 0.2s, border-color 0.2s;
 }
 [data-testid="stTabs"] [role="tab"][aria-selected="true"] {
     color: var(--blue) !important;
     border-bottom: 3px solid var(--blue) !important;
     background: transparent !important;
 }
-[data-testid="stTabs"] [role="tab"]:hover {
-    color: var(--white) !important;
-}
+[data-testid="stTabs"] [role="tab"]:hover { color: var(--white) !important; }
 
 /* ── Cards ── */
 .card {
@@ -110,10 +155,7 @@ html, body, [class*="css"] {
     padding: 1.4rem 1.6rem;
     margin-bottom: 1rem;
 }
-.card.highlight {
-    border-color: var(--border-hi);
-    box-shadow: 0 0 20px rgba(0,155,222,0.12);
-}
+.card.highlight { border-color: var(--border-hi); box-shadow: 0 0 20px rgba(0,155,222,0.12); }
 
 /* ── Section labels ── */
 .section-label {
@@ -163,11 +205,8 @@ html, body, [class*="css"] {
     width: 100%;
     box-shadow: 0 4px 15px rgba(0,155,222,0.3);
 }
-[data-testid="stFormSubmitButton"] button:hover {
-    box-shadow: 0 4px 25px rgba(0,155,222,0.5) !important;
-}
 
-/* ── Transport result card ── */
+/* ── Transport card ── */
 .transport-card {
     background: var(--card);
     border: 1px solid var(--border-hi);
@@ -184,12 +223,7 @@ html, body, [class*="css"] {
     letter-spacing: 0.05em;
     line-height: 1;
 }
-.transport-detail {
-    font-size: 0.82rem;
-    color: var(--grey);
-    margin-top: 0.3rem;
-    line-height: 1.6;
-}
+.transport-detail { font-size: 0.82rem; color: var(--grey); margin-top: 0.3rem; line-height: 1.6; }
 .transport-stat {
     background: var(--card2);
     border: 1px solid var(--border);
@@ -199,133 +233,66 @@ html, body, [class*="css"] {
 }
 .transport-stat-label {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
+    font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
 }
 .transport-stat-val {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: var(--blue);
-    line-height: 1.1;
+    font-size: 1.5rem; font-weight: 800; color: var(--blue); line-height: 1.1;
 }
 
-/* ── Crowd badges ── */
+/* ── Badges ── */
 .badge {
-    display: inline-block;
-    padding: 0.2rem 0.7rem;
-    border-radius: 99px;
-    font-size: 0.68rem;
-    font-weight: 700;
+    display: inline-block; padding: 0.2rem 0.7rem; border-radius: 99px;
+    font-size: 0.68rem; font-weight: 700;
     font-family: 'Barlow Condensed', sans-serif;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
+    letter-spacing: 0.1em; text-transform: uppercase;
 }
 .badge-calm  { background: rgba(0,200,83,0.15);  color: #00c853; border: 1px solid rgba(0,200,83,0.4); }
 .badge-busy  { background: rgba(255,145,0,0.15); color: #ff9100; border: 1px solid rgba(255,145,0,0.4); }
 .badge-full  { background: rgba(244,67,54,0.15); color: #f44336; border: 1px solid rgba(244,67,54,0.4); }
 
-/* ── Bar table ── */
+/* ── Bar rows ── */
 .bar-row {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem 1.2rem;
-    margin-bottom: 0.7rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 1rem 1.2rem; margin-bottom: 0.7rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
 }
 .bar-name {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1rem;
-    font-weight: 800;
-    color: var(--white);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800;
+    color: var(--white); text-transform: uppercase; letter-spacing: 0.05em;
 }
-.bar-meta {
-    font-size: 0.73rem;
-    color: var(--muted);
-    margin-top: 0.1rem;
-}
+.bar-meta { font-size: 0.73rem; color: var(--muted); margin-top: 0.1rem; }
 .bar-stars { color: var(--blue); font-size: 0.8rem; }
 .bar-right { text-align: right; flex-shrink: 0; }
-
-/* ── Filter pills ── */
-.stRadio [data-testid="stRadio"] label { color: var(--grey) !important; }
-.stRadio > label {
-    font-family: 'Barlow Condensed', sans-serif !important;
-    font-size: 0.65rem !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.18em !important;
-    text-transform: uppercase !important;
-    color: var(--muted) !important;
-}
 
 /* ── Scoreboard ── */
 .scoreboard {
     background: linear-gradient(135deg, var(--navy) 0%, #0a0a1a 100%);
-    border: 1px solid var(--border-hi);
-    border-radius: 16px;
-    padding: 2rem;
-    text-align: center;
-    box-shadow: 0 0 40px rgba(0,155,222,0.15);
-    margin-bottom: 1.2rem;
+    border: 1px solid var(--border-hi); border-radius: 16px; padding: 2rem;
+    text-align: center; box-shadow: 0 0 40px rgba(0,155,222,0.15); margin-bottom: 1.2rem;
 }
 .match-label {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--blue);
-    margin-bottom: 1rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.65rem; font-weight: 700;
+    letter-spacing: 0.25em; text-transform: uppercase; color: var(--blue); margin-bottom: 1rem;
 }
-.score-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1.5rem;
-}
+.score-row { display: flex; align-items: center; justify-content: center; gap: 1.5rem; }
 .team-name {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1.8rem;
-    font-weight: 900;
-    color: var(--white);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    width: 180px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 1.8rem; font-weight: 900;
+    color: var(--white); letter-spacing: 0.05em; text-transform: uppercase; width: 180px;
 }
 .team-name.right { text-align: left; }
 .team-name.left  { text-align: right; }
 .score-box {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 4.5rem;
-    font-weight: 900;
-    color: var(--blue);
-    letter-spacing: 0.05em;
-    line-height: 1;
-    text-shadow: 0 0 30px rgba(0,155,222,0.5);
+    font-family: 'Barlow Condensed', sans-serif; font-size: 4.5rem; font-weight: 900;
+    color: var(--blue); line-height: 1; text-shadow: 0 0 30px rgba(0,155,222,0.5);
 }
 .score-sep { color: var(--muted); font-size: 3rem; font-weight: 300; }
 .match-minute {
-    display: inline-block;
-    background: rgba(0,155,222,0.15);
-    border: 1px solid var(--blue);
-    border-radius: 99px;
-    padding: 0.25rem 0.9rem;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--blue);
-    letter-spacing: 0.1em;
-    margin-top: 0.8rem;
-    animation: pulse 2s infinite;
+    display: inline-block; background: rgba(0,155,222,0.15); border: 1px solid var(--blue);
+    border-radius: 99px; padding: 0.25rem 0.9rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 700;
+    color: var(--blue); letter-spacing: 0.1em; margin-top: 0.8rem; animation: pulse 2s infinite;
 }
 @keyframes pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(0,155,222,0.4); }
@@ -335,361 +302,269 @@ html, body, [class*="css"] {
 /* ── Stat bars ── */
 .stat-bar-wrap { margin-bottom: 1rem; }
 .stat-bar-label {
-    display: flex;
-    justify-content: space-between;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 0.35rem;
+    display: flex; justify-content: space-between;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem;
 }
 .stat-bar-track {
-    background: var(--card2);
-    border-radius: 99px;
-    height: 10px;
-    overflow: hidden;
-    border: 1px solid var(--border);
+    background: var(--card2); border-radius: 99px; height: 10px;
+    overflow: hidden; border: 1px solid var(--border);
 }
-.stat-bar-fill {
-    height: 100%;
-    border-radius: 99px;
-}
-
-/* ── Donut chart (CSS-only) ── */
-.donut-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 0.8rem;
-}
-.donut {
-    width: 130px;
-    height: 130px;
-    border-radius: 50%;
-    background: conic-gradient(var(--blue) 0% 58%, #2a2a50 58% 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-.donut::after {
-    content: '';
-    position: absolute;
-    width: 80px;
-    height: 80px;
-    background: var(--card);
-    border-radius: 50%;
-}
-.donut-label {
-    position: absolute;
-    z-index: 1;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1.3rem;
-    font-weight: 900;
-    color: var(--blue);
-}
-.donut-legend {
-    display: flex;
-    gap: 1rem;
-    font-size: 0.72rem;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-}
-.legend-dot {
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    margin-right: 0.35rem;
-    vertical-align: middle;
-}
+.stat-bar-fill { height: 100%; border-radius: 99px; }
 
 /* ── AI Card ── */
 .ai-card {
     background: linear-gradient(135deg, rgba(0,155,222,0.08) 0%, var(--card2) 100%);
-    border: 1px solid var(--border-hi);
-    border-radius: 12px;
-    padding: 1.4rem 1.6rem;
-    position: relative;
-    overflow: hidden;
+    border: 1px solid var(--border-hi); border-radius: 12px; padding: 1.4rem 1.6rem;
+    position: relative; overflow: hidden;
 }
 .ai-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 4px; height: 100%;
-    background: var(--blue);
-    box-shadow: 0 0 15px rgba(0,155,222,0.6);
+    content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+    background: var(--blue); box-shadow: 0 0 15px rgba(0,155,222,0.6);
 }
 .ai-tag {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.6rem;
-    font-weight: 800;
-    letter-spacing: 0.22em;
-    text-transform: uppercase;
-    color: var(--blue);
-    margin-bottom: 0.5rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.6rem; font-weight: 800;
+    letter-spacing: 0.22em; text-transform: uppercase; color: var(--blue); margin-bottom: 0.5rem;
 }
-.ai-text {
-    font-size: 0.9rem;
-    color: var(--grey);
-    line-height: 1.65;
-}
+.ai-text { font-size: 0.9rem; color: var(--grey); line-height: 1.65; }
 .ai-text strong { color: var(--white); }
 
 /* ── Metrics ── */
 .metric-grid { display: flex; gap: 0.8rem; flex-wrap: wrap; }
 .metric-cell {
-    background: var(--card2);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.9rem 1.2rem;
-    flex: 1;
-    min-width: 110px;
-    text-align: center;
+    background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 0.9rem 1.2rem; flex: 1; min-width: 110px; text-align: center;
 }
 .metric-label {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.58rem;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 0.3rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.58rem; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem;
 }
-.metric-val {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1.6rem;
-    font-weight: 900;
-    color: var(--blue);
-    line-height: 1;
-}
+.metric-val { font-family: 'Barlow Condensed', sans-serif; font-size: 1.6rem; font-weight: 900; color: var(--blue); line-height: 1; }
 .metric-sub { font-size: 0.68rem; color: var(--muted); margin-top: 0.15rem; }
 
-/* ── Selectbox / radio overrides ── */
-div[data-testid="stSelectbox"] label,
-div[data-testid="stRadio"] label {
-    color: var(--grey) !important;
-}
+/* ── Radio ── */
+div[data-testid="stSelectbox"] label, div[data-testid="stRadio"] label { color: var(--grey) !important; }
 div[data-testid="stRadio"] > label {
-    font-family: 'Barlow Condensed', sans-serif !important;
-    font-size: 0.65rem !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.2em !important;
-    text-transform: uppercase !important;
-    color: var(--muted) !important;
+    font-family: 'Barlow Condensed', sans-serif !important; font-size: 0.65rem !important;
+    font-weight: 700 !important; letter-spacing: 0.2em !important;
+    text-transform: uppercase !important; color: var(--muted) !important;
 }
 
 /* ── Divider ── */
-.blue-divider {
-    border: none;
-    border-top: 1px solid var(--border);
-    margin: 1.2rem 0;
+.blue-divider { border: none; border-top: 1px solid var(--border); margin: 1.2rem 0; }
+
+/* ── Countdown ── */
+.countdown-wrap {
+    background: linear-gradient(135deg, var(--navy) 0%, #0a0a1a 100%);
+    border: 1px solid var(--border-hi); border-radius: 16px;
+    padding: 2.2rem 2rem; text-align: center;
+    box-shadow: 0 0 40px rgba(0,155,222,0.15); margin-bottom: 1.5rem;
+}
+.countdown-match {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 700;
+    color: var(--blue); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 0.3rem;
+}
+.countdown-date {
+    font-size: 0.8rem; color: var(--muted); margin-bottom: 1.5rem; letter-spacing: 0.08em;
+}
+.countdown-grid { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.countdown-cell {
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem 1.4rem; min-width: 80px;
+}
+.countdown-num {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 3rem; font-weight: 900;
+    color: var(--blue); line-height: 1; text-shadow: 0 0 20px rgba(0,155,222,0.5);
+}
+.countdown-lbl {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.55rem; font-weight: 700;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-top: 0.2rem;
+}
+
+/* ── Home stat cards ── */
+.home-stat-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.4rem 1.2rem; text-align: center; position: relative; overflow: hidden;
+}
+.home-stat-card::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, transparent, var(--blue), transparent);
+}
+.home-stat-num {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 2.4rem; font-weight: 900;
+    color: var(--blue); line-height: 1;
+}
+.home-stat-label {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase; color: var(--grey); margin-top: 0.3rem;
+}
+
+/* ── News ticker ── */
+.ticker-wrap {
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 0.7rem 1rem;
+    overflow: hidden; white-space: nowrap; position: relative;
+}
+.ticker-label {
+    display: inline-block; background: var(--blue); color: var(--white);
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.6rem; font-weight: 800;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 0.15rem 0.6rem; border-radius: 4px; margin-right: 1rem; vertical-align: middle;
+}
+.ticker-text {
+    display: inline-block;
+    animation: marquee 28s linear infinite;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 600;
+    color: var(--grey); letter-spacing: 0.04em;
+}
+@keyframes marquee {
+    0%   { transform: translateX(100vw); }
+    100% { transform: translateX(-200%); }
+}
+
+/* ── Chant cards ── */
+.chant-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-left: 4px solid var(--blue); border-radius: 12px;
+    padding: 1.3rem 1.5rem; margin-bottom: 1rem; position: relative;
+}
+.chant-name {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 1.2rem; font-weight: 900;
+    color: var(--white); text-transform: uppercase; letter-spacing: 0.06em;
+    margin-bottom: 0.6rem;
+}
+.chant-lyrics {
+    font-size: 0.85rem; color: var(--grey); line-height: 1.7;
+    font-style: italic; margin-bottom: 0.8rem;
+    border-left: 2px solid rgba(0,155,222,0.3); padding-left: 0.8rem;
+}
+.chant-meta { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; }
+.chant-tag {
+    background: rgba(0,155,222,0.1); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.2rem 0.6rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+}
+.chant-sector {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.62rem; font-weight: 800;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--blue);
+}
+.exclusive-badge {
+    background: rgba(255,145,0,0.12); border: 1px solid rgba(255,145,0,0.4);
+    border-radius: 99px; padding: 0.15rem 0.7rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.6rem; font-weight: 800;
+    letter-spacing: 0.15em; text-transform: uppercase; color: #ff9100;
+}
+
+/* ── Chat ── */
+.chat-window {
+    background: var(--card2); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.2rem 1.4rem; margin-bottom: 1rem;
+    max-height: 420px; overflow-y: auto;
+}
+.chat-msg { margin-bottom: 1rem; }
+.chat-header { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.25rem; }
+.chat-name {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 800;
+    color: var(--white); text-transform: uppercase; letter-spacing: 0.05em;
+}
+.chat-quartier { font-size: 0.68rem; color: var(--blue); }
+.chat-time { font-size: 0.65rem; color: var(--muted); margin-left: auto; }
+.chat-bubble {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 0 10px 10px 10px; padding: 0.6rem 0.9rem;
+    font-size: 0.83rem; color: var(--grey); line-height: 1.5; display: inline-block;
+    max-width: 90%;
+}
+.chat-bubble.mine {
+    background: rgba(0,155,222,0.12); border-color: rgba(0,155,222,0.3);
+    color: var(--white); border-radius: 10px 0 10px 10px; float: right;
+}
+.chat-mod-badge {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: rgba(0,200,83,0.08); border: 1px solid rgba(0,200,83,0.25);
+    border-radius: 8px; padding: 0.5rem 0.9rem; margin-bottom: 1rem;
+    font-size: 0.72rem; color: #00c853; font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
 }
 
 /* ── Pricing ── */
-.pricing-header {
-    text-align: center;
-    padding: 1rem 0 2rem;
-}
+.pricing-header { text-align: center; padding: 1rem 0 2rem; }
 .pricing-title {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 2.4rem;
-    font-weight: 900;
-    color: var(--white);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    line-height: 1;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 2.4rem; font-weight: 900;
+    color: var(--white); text-transform: uppercase; letter-spacing: 0.05em; line-height: 1;
 }
-.pricing-subtitle {
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin-top: 0.4rem;
-}
+.pricing-subtitle { font-size: 0.85rem; color: var(--muted); margin-top: 0.4rem; }
 .toggle-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.8rem;
-    margin-top: 1.2rem;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--grey);
+    display: flex; align-items: center; justify-content: center; gap: 0.8rem; margin-top: 1.2rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--grey);
 }
 .save-badge {
-    background: rgba(0,155,222,0.15);
-    border: 1px solid var(--blue);
-    border-radius: 99px;
-    padding: 0.1rem 0.6rem;
-    font-size: 0.65rem;
-    font-weight: 800;
-    color: var(--blue);
-    letter-spacing: 0.1em;
+    background: rgba(0,155,222,0.15); border: 1px solid var(--blue); border-radius: 99px;
+    padding: 0.1rem 0.6rem; font-size: 0.65rem; font-weight: 800; color: var(--blue); letter-spacing: 0.1em;
 }
 .pricing-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 2rem 1.8rem;
-    height: 100%;
-    position: relative;
-    display: flex;
-    flex-direction: column;
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 2rem 1.8rem; height: 100%; position: relative; display: flex; flex-direction: column;
 }
 .pricing-card.featured {
-    border-color: var(--blue);
-    box-shadow: 0 0 40px rgba(0,155,222,0.2), inset 0 0 60px rgba(0,155,222,0.03);
+    border-color: var(--blue); box-shadow: 0 0 40px rgba(0,155,222,0.2), inset 0 0 60px rgba(0,155,222,0.03);
 }
 .most-popular-badge {
-    position: absolute;
-    top: -1px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--blue);
-    color: var(--white);
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.6rem;
-    font-weight: 800;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    padding: 0.25rem 1rem;
-    border-radius: 0 0 8px 8px;
+    position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+    background: var(--blue); color: var(--white);
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.6rem; font-weight: 800;
+    letter-spacing: 0.2em; text-transform: uppercase; padding: 0.25rem 1rem; border-radius: 0 0 8px 8px;
 }
 .plan-name {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 800;
-    color: var(--white);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 0.6rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 800;
+    color: var(--white); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.6rem;
 }
 .plan-price {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 3.2rem;
-    font-weight: 900;
-    color: var(--blue);
-    line-height: 1;
-    letter-spacing: -0.01em;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 3.2rem; font-weight: 900;
+    color: var(--blue); line-height: 1; letter-spacing: -0.01em;
 }
-.plan-price span {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--muted);
-    letter-spacing: 0;
-}
-.plan-price-custom {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 2.2rem;
-    font-weight: 900;
-    color: var(--blue);
-    line-height: 1;
-}
-.plan-desc {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin: 0.4rem 0 1.2rem;
-}
+.plan-price span { font-size: 1rem; font-weight: 600; color: var(--muted); letter-spacing: 0; }
+.plan-price-custom { font-family: 'Barlow Condensed', sans-serif; font-size: 2.2rem; font-weight: 900; color: var(--blue); line-height: 1; }
+.plan-desc { font-size: 0.75rem; color: var(--muted); margin: 0.4rem 0 1.2rem; }
 .plan-divider {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.58rem;
-    font-weight: 800;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--blue);
-    margin: 1rem 0 0.8rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.58rem; font-weight: 800;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--blue); margin: 1rem 0 0.8rem;
 }
-.plan-feature {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.6rem;
-    font-size: 0.82rem;
-    color: var(--grey);
-    margin-bottom: 0.55rem;
-    line-height: 1.4;
-}
-.plan-feature .check {
-    color: var(--blue);
-    font-size: 0.9rem;
-    flex-shrink: 0;
-    margin-top: 0.05rem;
-}
-.plan-feature .icon {
-    font-size: 0.85rem;
-    flex-shrink: 0;
-    margin-top: 0.05rem;
-}
+.plan-feature { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.82rem; color: var(--grey); margin-bottom: 0.55rem; line-height: 1.4; }
+.plan-feature .check { color: var(--blue); font-size: 0.9rem; flex-shrink: 0; margin-top: 0.05rem; }
+.plan-feature .icon  { font-size: 0.85rem; flex-shrink: 0; margin-top: 0.05rem; }
 .plan-cta-primary {
-    display: block;
-    width: 100%;
-    background: var(--blue);
-    color: var(--white);
-    border: none;
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    text-align: center;
-    margin-top: auto;
+    display: block; width: 100%; background: var(--blue); color: var(--white);
+    border: none; border-radius: 8px; padding: 0.75rem 1rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 800;
+    letter-spacing: 0.12em; text-transform: uppercase; text-align: center; margin-top: auto;
     box-shadow: 0 4px 20px rgba(0,155,222,0.35);
-    cursor: pointer;
 }
 .plan-cta-secondary {
-    display: block;
-    width: 100%;
-    background: transparent;
-    color: var(--grey);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.85rem;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    text-align: center;
-    margin-top: auto;
-    cursor: pointer;
+    display: block; width: 100%; background: transparent; color: var(--grey);
+    border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 800;
+    letter-spacing: 0.12em; text-transform: uppercase; text-align: center; margin-top: auto;
 }
-.faq-item {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem 1.2rem;
-    margin-bottom: 0.7rem;
-}
-.faq-q {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--white);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.3rem;
-}
-.faq-a {
-    font-size: 0.78rem;
-    color: var(--muted);
-    line-height: 1.55;
-}
+.faq-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 0.7rem; }
+.faq-q { font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700; color: var(--white); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
+.faq-a { font-size: 0.78rem; color: var(--muted); line-height: 1.55; }
 </style>
 """, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────────────────────────────────────
-# HEADER
+# HEADER  (logo + title)
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="app-header">
+    <div class="om-logo-wrap">
+        <div class="om-logo">
+            <div class="om-logo-om">OM</div>
+            <div class="om-logo-sub">Fan Hub</div>
+        </div>
+    </div>
     <div class="app-title">OM <span>Fan</span> Hub</div>
     <div class="app-subtitle">One City &nbsp;·&nbsp; One Club &nbsp;·&nbsp; One App</div>
     <hr class="header-line">
@@ -699,68 +574,199 @@ st.markdown("""
 # ─────────────────────────────────────────────────────────────────────────────
 # DATA
 # ─────────────────────────────────────────────────────────────────────────────
-
-# Transport logic
 TRANSPORT_DATA = {
-    # (neighborhood, sector): (mode, line, duration, crowd)
-    ("Noailles",         "Virage Sud"):            ("🚇 Metro", "Ligne 2 → Rond-Point du Prado", "12 min", "High"),
-    ("Noailles",         "Virage Nord"):            ("🚇 Metro", "Ligne 2 → Rond-Point du Prado", "13 min", "High"),
-    ("Noailles",         "Tribune Jean Bouin"):     ("🚇 Metro", "Ligne 2 → Rond-Point du Prado", "14 min", "High"),
-    ("Noailles",         "Tribune Ganay"):          ("🚇 Metro", "Ligne 2 → Rond-Point du Prado", "14 min", "High"),
-    ("Castellane",       "Virage Sud"):             ("🚇 Metro", "Ligne 1 → Castellane → Prado", "8 min",  "Medium"),
-    ("Castellane",       "Virage Nord"):            ("🚌 Bus",   "Bus 21 direction Bonneveine",   "11 min", "Medium"),
-    ("Castellane",       "Tribune Jean Bouin"):     ("🚌 Bus",   "Bus 21 direction Bonneveine",   "10 min", "Low"),
-    ("Castellane",       "Tribune Ganay"):          ("🚇 Metro", "Ligne 1 → Castellane → Prado", "9 min",  "Medium"),
-    ("Vieux-Port",       "Virage Sud"):             ("🚇 Metro", "Ligne 1 → Vieux-Port → Prado", "18 min", "Medium"),
-    ("Vieux-Port",       "Virage Nord"):            ("🚌 Bus",   "Bus 83 direction Bonneveine",   "22 min", "Low"),
-    ("Vieux-Port",       "Tribune Jean Bouin"):     ("🚌 Bus",   "Bus 83 direction Bonneveine",   "20 min", "Low"),
-    ("Vieux-Port",       "Tribune Ganay"):          ("🚇 Metro", "Ligne 1 → Vieux-Port → Prado", "19 min", "Medium"),
-    ("Baille",           "Virage Sud"):             ("🚶 Walk",  "Rue Paradis → Av. du Prado",   "18 min", "Low"),
-    ("Baille",           "Virage Nord"):            ("🚶 Walk",  "Rue Breteuil → Bd Michelet",   "22 min", "Low"),
-    ("Baille",           "Tribune Jean Bouin"):     ("🚶 Walk",  "Rue Breteuil → Bd Michelet",   "20 min", "Low"),
-    ("Baille",           "Tribune Ganay"):          ("🚶 Walk",  "Av. du Prado direct",          "16 min", "Low"),
-    ("La Plaine",        "Virage Sud"):             ("🚌 Bus",   "Bus 74 → Rond-Point du Prado", "25 min", "Medium"),
-    ("La Plaine",        "Virage Nord"):            ("🚌 Bus",   "Bus 74 → Rond-Point du Prado", "27 min", "Low"),
-    ("La Plaine",        "Tribune Jean Bouin"):     ("🚌 Bus",   "Bus 74 → Rond-Point du Prado", "26 min", "Low"),
-    ("La Plaine",        "Tribune Ganay"):          ("🚌 Bus",   "Bus 74 → Rond-Point du Prado", "25 min", "Medium"),
-    ("Saint-Charles",    "Virage Sud"):             ("🚇 Metro", "Ligne 1 → Castellane → Prado", "22 min", "High"),
-    ("Saint-Charles",    "Virage Nord"):            ("🚇 Metro", "Ligne 1 → Castellane → Prado", "23 min", "High"),
-    ("Saint-Charles",    "Tribune Jean Bouin"):     ("🚇 Metro", "Ligne 1 → Castellane → Prado", "24 min", "High"),
-    ("Saint-Charles",    "Tribune Ganay"):          ("🚇 Metro", "Ligne 1 → Castellane → Prado", "22 min", "High"),
-    ("Cours Julien",     "Virage Sud"):             ("🚌 Bus",   "Bus 21 → Bd Michelet",         "15 min", "Medium"),
-    ("Cours Julien",     "Virage Nord"):            ("🚌 Bus",   "Bus 21 → Bd Michelet",         "16 min", "Medium"),
-    ("Cours Julien",     "Tribune Jean Bouin"):     ("🚶 Walk",  "Rue d'Aubagne → Av. du Prado", "19 min", "Low"),
-    ("Cours Julien",     "Tribune Ganay"):          ("🚌 Bus",   "Bus 21 → Bd Michelet",         "15 min", "Medium"),
+    ("Noailles",      "Virage Sud"):        ("🚇 Metro", "Ligne 2 → Rond-Point du Prado", "12 min", "High"),
+    ("Noailles",      "Virage Nord"):       ("🚇 Metro", "Ligne 2 → Rond-Point du Prado", "13 min", "High"),
+    ("Noailles",      "Tribune Jean Bouin"):("🚇 Metro", "Ligne 2 → Rond-Point du Prado", "14 min", "High"),
+    ("Noailles",      "Tribune Ganay"):     ("🚇 Metro", "Ligne 2 → Rond-Point du Prado", "14 min", "High"),
+    ("Castellane",    "Virage Sud"):        ("🚇 Metro", "Ligne 1 → Castellane → Prado",  "8 min",  "Medium"),
+    ("Castellane",    "Virage Nord"):       ("🚌 Bus",   "Bus 21 direction Bonneveine",    "11 min", "Medium"),
+    ("Castellane",    "Tribune Jean Bouin"):("🚌 Bus",   "Bus 21 direction Bonneveine",    "10 min", "Low"),
+    ("Castellane",    "Tribune Ganay"):     ("🚇 Metro", "Ligne 1 → Castellane → Prado",  "9 min",  "Medium"),
+    ("Vieux-Port",    "Virage Sud"):        ("🚇 Metro", "Ligne 1 → Vieux-Port → Prado",  "18 min", "Medium"),
+    ("Vieux-Port",    "Virage Nord"):       ("🚌 Bus",   "Bus 83 direction Bonneveine",    "22 min", "Low"),
+    ("Vieux-Port",    "Tribune Jean Bouin"):("🚌 Bus",   "Bus 83 direction Bonneveine",    "20 min", "Low"),
+    ("Vieux-Port",    "Tribune Ganay"):     ("🚇 Metro", "Ligne 1 → Vieux-Port → Prado",  "19 min", "Medium"),
+    ("Baille",        "Virage Sud"):        ("🚶 Walk",  "Rue Paradis → Av. du Prado",    "18 min", "Low"),
+    ("Baille",        "Virage Nord"):       ("🚶 Walk",  "Rue Breteuil → Bd Michelet",    "22 min", "Low"),
+    ("Baille",        "Tribune Jean Bouin"):("🚶 Walk",  "Rue Breteuil → Bd Michelet",    "20 min", "Low"),
+    ("Baille",        "Tribune Ganay"):     ("🚶 Walk",  "Av. du Prado direct",           "16 min", "Low"),
+    ("La Plaine",     "Virage Sud"):        ("🚌 Bus",   "Bus 74 → Rond-Point du Prado",  "25 min", "Medium"),
+    ("La Plaine",     "Virage Nord"):       ("🚌 Bus",   "Bus 74 → Rond-Point du Prado",  "27 min", "Low"),
+    ("La Plaine",     "Tribune Jean Bouin"):("🚌 Bus",   "Bus 74 → Rond-Point du Prado",  "26 min", "Low"),
+    ("La Plaine",     "Tribune Ganay"):     ("🚌 Bus",   "Bus 74 → Rond-Point du Prado",  "25 min", "Medium"),
+    ("Saint-Charles", "Virage Sud"):        ("🚇 Metro", "Ligne 1 → Castellane → Prado",  "22 min", "High"),
+    ("Saint-Charles", "Virage Nord"):       ("🚇 Metro", "Ligne 1 → Castellane → Prado",  "23 min", "High"),
+    ("Saint-Charles", "Tribune Jean Bouin"):("🚇 Metro", "Ligne 1 → Castellane → Prado",  "24 min", "High"),
+    ("Saint-Charles", "Tribune Ganay"):     ("🚇 Metro", "Ligne 1 → Castellane → Prado",  "22 min", "High"),
+    ("Cours Julien",  "Virage Sud"):        ("🚌 Bus",   "Bus 21 → Bd Michelet",          "15 min", "Medium"),
+    ("Cours Julien",  "Virage Nord"):       ("🚌 Bus",   "Bus 21 → Bd Michelet",          "16 min", "Medium"),
+    ("Cours Julien",  "Tribune Jean Bouin"):("🚶 Walk",  "Rue d'Aubagne → Av. du Prado",  "19 min", "Low"),
+    ("Cours Julien",  "Tribune Ganay"):     ("🚌 Bus",   "Bus 21 → Bd Michelet",          "15 min", "Medium"),
 }
+NEIGHBORHOODS = ["Noailles","Castellane","Vieux-Port","Baille","La Plaine","Saint-Charles","Cours Julien"]
+SECTORS       = ["Virage Sud","Virage Nord","Tribune Jean Bouin","Tribune Ganay"]
 
-NEIGHBORHOODS = ["Noailles", "Castellane", "Vieux-Port", "Baille", "La Plaine", "Saint-Charles", "Cours Julien"]
-SECTORS       = ["Virage Sud", "Virage Nord", "Tribune Jean Bouin", "Tribune Ganay"]
-
-# Bar data
 BARS = pd.DataFrame([
-    {"Bar": "Le Droit au But",     "Quartier": "Castellane",   "Distance": "350m", "Ambiance": 5, "Crowd": "Full"},
-    {"Bar": "Bar des Supporters",  "Quartier": "Vieux-Port",   "Distance": "1.2km","Ambiance": 4, "Crowd": "Busy"},
-    {"Bar": "L'Avant-Match",       "Quartier": "Baille",       "Distance": "600m", "Ambiance": 4, "Crowd": "Calm"},
-    {"Bar": "Le Virage Bleu",      "Quartier": "Noailles",     "Distance": "900m", "Ambiance": 3, "Crowd": "Busy"},
-    {"Bar": "Le Treizième Homme",  "Quartier": "La Plaine",    "Distance": "1.5km","Ambiance": 5, "Crowd": "Calm"},
+    {"Bar":"Le Droit au But",    "Quartier":"Castellane", "Distance":"350m", "Ambiance":5,"Crowd":"Full"},
+    {"Bar":"Bar des Supporters", "Quartier":"Vieux-Port", "Distance":"1.2km","Ambiance":4,"Crowd":"Busy"},
+    {"Bar":"L'Avant-Match",      "Quartier":"Baille",     "Distance":"600m", "Ambiance":4,"Crowd":"Calm"},
+    {"Bar":"Le Virage Bleu",     "Quartier":"Noailles",   "Distance":"900m", "Ambiance":3,"Crowd":"Busy"},
+    {"Bar":"Le Treizième Homme", "Quartier":"La Plaine",  "Distance":"1.5km","Ambiance":5,"Crowd":"Calm"},
 ])
+
+CHANTS = [
+    {
+        "name": "Aux Armes",
+        "lyrics": "Aux armes, nous sommes les Marseillais !\nLes plus forts, les plus beaux, les meilleurs !\nAux armes, debout tous les Phocéens !\nEn avant pour la victoire !",
+        "timing": "Avant le coup d'envoi et après chaque but",
+        "sector": "Virage Nord",
+    },
+    {
+        "name": "On Est le Sud",
+        "lyrics": "On est le Sud, on est le Sud !\nOn est le Sud de Marseille !\nOn est le Sud, on est le Sud !\nOn ne lâche jamais rien !",
+        "timing": "Tout au long du match, mené par le Virage Nord",
+        "sector": "Virage Nord",
+    },
+    {
+        "name": "Allez l'OM",
+        "lyrics": "Allez l'OM, allez l'OM !\nCe soir on va gagner !\nAllez l'OM, allez l'OM !\nLe Vélodrome va trembler !",
+        "timing": "Pendant les phases de pression offensive",
+        "sector": "Virage Nord",
+    },
+    {
+        "name": "La Marseillaise OM",
+        "lyrics": "Marseille, Marseille, Marseille !\nTu es dans nos cœurs pour toujours !\nBleu et blanc, notre fierté !\nOn se bat pour toi chaque jour !",
+        "timing": "Entrée des joueurs sur le terrain",
+        "sector": "Virage Nord",
+    },
+    {
+        "name": "Qui Ne Saute Pas",
+        "lyrics": "Qui ne saute pas n'est pas Marseillais !\nSaute, saute, saute !\nQui ne saute pas n'est pas Marseillais !",
+        "timing": "Après le 2ème but ou lors des moments de joie intense",
+        "sector": "Virage Nord",
+    },
+]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TABS
 # ─────────────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4 = st.tabs([
-    "🚇  Smart Transport",
+tab0, tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+    "🏠  Home",
+    "🚇  Transport",
     "🍺  Bar Finder",
-    "📊  Live Match Stats",
+    "📊  Live Stats",
+    "🎤  Chant Guide",
+    "💬  Fan Chat",
     "💳  Pricing",
 ])
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB 0 — HOME
+# ══════════════════════════════════════════════════════════════════════════════
+with tab0:
+
+    # — Countdown timer —
+    MATCH_DATE = datetime(2025, 5, 3, 21, 0, 0)
+    now        = datetime.now()
+    delta      = MATCH_DATE - now
+
+    if delta.total_seconds() > 0:
+        total_secs = int(delta.total_seconds())
+        days_cd    = total_secs // 86400
+        hours_cd   = (total_secs % 86400) // 3600
+        mins_cd    = (total_secs % 3600) // 60
+        secs_cd    = total_secs % 60
+        cd_status  = ""
+    else:
+        days_cd = hours_cd = mins_cd = secs_cd = 0
+        cd_status = "<div style='color:var(--green);font-size:0.8rem;margin-top:0.5rem'>⚽ Match en cours ou terminé</div>"
+
+    countdown_placeholder = st.empty()
+    countdown_placeholder.markdown(f"""
+    <div class="countdown-wrap">
+        <div class="countdown-match">⚽ OM vs Lyon — Prochaine Rencontre</div>
+        <div class="countdown-date">Samedi 3 Mai 2025 · 21:00 · Stade Vélodrome · Ligue 1</div>
+        <div class="countdown-grid">
+            <div class="countdown-cell">
+                <div class="countdown-num">{days_cd:02d}</div>
+                <div class="countdown-lbl">Jours</div>
+            </div>
+            <div class="countdown-cell">
+                <div class="countdown-num">{hours_cd:02d}</div>
+                <div class="countdown-lbl">Heures</div>
+            </div>
+            <div class="countdown-cell">
+                <div class="countdown-num">{mins_cd:02d}</div>
+                <div class="countdown-lbl">Minutes</div>
+            </div>
+            <div class="countdown-cell">
+                <div class="countdown-num">{secs_cd:02d}</div>
+                <div class="countdown-lbl">Secondes</div>
+            </div>
+        </div>
+        {cd_status}
+    </div>
+    """, unsafe_allow_html=True)
+
+    # — 3 stat cards —
+    st.markdown('<div class="section-label">Le Vélodrome en chiffres</div>', unsafe_allow_html=True)
+    sc1, sc2, sc3 = st.columns(3, gap="large")
+    home_stats = [
+        ("67K",  "Capacité du stade",             sc1),
+        ("44K",  "Abonnés saison en cours",        sc2),
+        ("85+",  "Départements représentés",       sc3),
+    ]
+    for val, label, col in home_stats:
+        with col:
+            st.markdown(f"""
+            <div class="home-stat-card">
+                <div class="home-stat-num">{val}</div>
+                <div class="home-stat-label">{label}</div>
+            </div>""", unsafe_allow_html=True)
+
+    # — News ticker —
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-label">Flash Infos</div>', unsafe_allow_html=True)
+    headlines = [
+        "OM 2-1 Lyon · Aubameyang scores 87'",
+        "Vélodrome sold out for 12th consecutive match",
+        "OM qualify for Champions League semi-finals",
+        "Aubameyang named Ligue 1 Player of the Month",
+    ]
+    ticker_text = "  &nbsp;&nbsp;&nbsp;  ⚡  &nbsp;&nbsp;&nbsp;  ".join(headlines)
+    st.markdown(f"""
+    <div class="ticker-wrap">
+        <span class="ticker-label">Live</span>
+        <span class="ticker-text">{ticker_text}</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # — Quick links —
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-label">Accès Rapide</div>', unsafe_allow_html=True)
+    ql1, ql2, ql3, ql4 = st.columns(4, gap="medium")
+    quick = [
+        ("🚇", "Transport", "Planifie ton trajet", ql1),
+        ("🍺", "Bar Finder", "Trouve un bar supporter", ql2),
+        ("📊", "Live Stats", "Stats du match en direct", ql3),
+        ("🎤", "Chant Guide", "Apprends les chants", ql4),
+    ]
+    for icon, title, desc, col in quick:
+        with col:
+            st.markdown(f"""
+            <div class="card" style="text-align:center;padding:1.2rem 1rem">
+                <div style="font-size:1.8rem;margin-bottom:0.4rem">{icon}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.85rem;font-weight:800;
+                            color:var(--white);text-transform:uppercase;letter-spacing:0.05em">{title}</div>
+                <div style="font-size:0.72rem;color:var(--muted);margin-top:0.2rem">{desc}</div>
+            </div>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 1 — SMART TRANSPORT
 # ══════════════════════════════════════════════════════════════════════════════
 with tab1:
     st.markdown('<div class="section-label">Itinerary Planner</div>', unsafe_allow_html=True)
-
     left, right = st.columns([1, 1.4], gap="large")
 
     with left:
@@ -770,60 +776,49 @@ with tab1:
             submitted    = st.form_submit_button("Get My Route →", use_container_width=True)
 
     with right:
-        if submitted or True:  # show default on load
-            key = (neighborhood if submitted else "Noailles",
-                   sector       if submitted else "Virage Sud")
-            rec = TRANSPORT_DATA.get(key, ("🚇 Metro", "Ligne 2 → Prado", "15 min", "Medium"))
-            mode, line, duration, crowd = rec
-
-            crowd_badge = {
-                "Low":    '<span class="badge badge-calm">🟢 Low Crowd</span>',
-                "Medium": '<span class="badge badge-busy">🟠 Medium Crowd</span>',
-                "High":   '<span class="badge badge-full">🔴 High Crowd</span>',
-            }.get(crowd, "")
-
-            crowd_tip = {
-                "Low":    "Comfortable journey — you'll have room to breathe.",
-                "Medium": "Expect some queuing. Give yourself extra time.",
-                "High":   "Very busy! Leave at least 30 min early.",
-            }.get(crowd, "")
-
-            st.markdown(f"""
-            <div class="transport-card">
-                <div class="transport-mode">{mode}</div>
-                <div class="transport-detail" style="margin:0.5rem 0 0.8rem">{line}</div>
-                {crowd_badge}
-                <hr class="blue-divider">
-                <div style="display:flex; gap:0.8rem; margin-bottom:1rem">
-                    <div class="transport-stat" style="flex:1">
-                        <div class="transport-stat-label">Est. Arrival</div>
-                        <div class="transport-stat-val">{duration}</div>
-                    </div>
-                    <div class="transport-stat" style="flex:1">
-                        <div class="transport-stat-label">Crowd Level</div>
-                        <div class="transport-stat-val">{crowd}</div>
-                    </div>
-                    <div class="transport-stat" style="flex:1">
-                        <div class="transport-stat-label">Sector</div>
-                        <div class="transport-stat-val" style="font-size:0.9rem">{sector.split()[0]}</div>
-                    </div>
+        key  = (neighborhood if submitted else "Noailles", sector if submitted else "Virage Sud")
+        rec  = TRANSPORT_DATA.get(key, ("🚇 Metro", "Ligne 2 → Prado", "15 min", "Medium"))
+        mode, line, duration, crowd = rec
+        crowd_badge = {"Low":'<span class="badge badge-calm">🟢 Low Crowd</span>',
+                       "Medium":'<span class="badge badge-busy">🟠 Medium Crowd</span>',
+                       "High":'<span class="badge badge-full">🔴 High Crowd</span>'}.get(crowd,"")
+        crowd_tip   = {"Low":"Comfortable journey — you'll have room to breathe.",
+                       "Medium":"Expect some queuing. Give yourself extra time.",
+                       "High":"Very busy! Leave at least 30 min early."}.get(crowd,"")
+        st.markdown(f"""
+        <div class="transport-card">
+            <div class="transport-mode">{mode}</div>
+            <div class="transport-detail" style="margin:0.5rem 0 0.8rem">{line}</div>
+            {crowd_badge}
+            <hr class="blue-divider">
+            <div style="display:flex;gap:0.8rem;margin-bottom:1rem">
+                <div class="transport-stat" style="flex:1">
+                    <div class="transport-stat-label">Est. Arrival</div>
+                    <div class="transport-stat-val">{duration}</div>
                 </div>
-                <div style="background:rgba(0,155,222,0.07);border-radius:8px;padding:0.7rem 1rem;font-size:0.78rem;color:var(--grey);">
-                    💡 <strong style="color:var(--white)">{crowd_tip}</strong>
+                <div class="transport-stat" style="flex:1">
+                    <div class="transport-stat-label">Crowd Level</div>
+                    <div class="transport-stat-val">{crowd}</div>
+                </div>
+                <div class="transport-stat" style="flex:1">
+                    <div class="transport-stat-label">Sector</div>
+                    <div class="transport-stat-val" style="font-size:0.9rem">{sector.split()[0]}</div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            <div style="background:rgba(0,155,222,0.07);border-radius:8px;padding:0.7rem 1rem;font-size:0.78rem;color:var(--grey);">
+                💡 <strong style="color:var(--white)">{crowd_tip}</strong>
+            </div>
+        </div>""", unsafe_allow_html=True)
 
-    # Tips row
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="section-label">Matchday Tips</div>', unsafe_allow_html=True)
-    t1, t2, t3 = st.columns(3)
+    t1c, t2c, t3c = st.columns(3)
     tips = [
-        ("🎫", "Ticket Check", "Have your QR code ready 15 min before kickoff to avoid gate queues."),
-        ("⏰", "Best Timing", "Arrive 45 min early — crowds peak at T-20 min before kickoff."),
-        ("🔒", "Security", "No large bags or glass bottles. Metal detectors at all entrances."),
+        ("🎫","Ticket Check","Have your QR code ready 15 min before kickoff to avoid gate queues."),
+        ("⏰","Best Timing","Arrive 45 min early — crowds peak at T-20 min before kickoff."),
+        ("🔒","Security","No large bags or glass bottles. Metal detectors at all entrances."),
     ]
-    for col, (icon, title, desc) in zip([t1, t2, t3], tips):
+    for col, (icon, title, desc) in zip([t1c, t2c, t3c], tips):
         with col:
             st.markdown(f"""
             <div class="card">
@@ -839,61 +834,44 @@ with tab1:
 # ══════════════════════════════════════════════════════════════════════════════
 with tab2:
     st.markdown('<div class="section-label">Supporter Bars Near Vélodrome</div>', unsafe_allow_html=True)
-
     filter_col, _ = st.columns([1, 2])
     with filter_col:
-        crowd_filter = st.radio(
-            "Filter by crowd level",
-            options=["All", "Calm", "Busy", "Full"],
-            horizontal=True,
-        )
+        crowd_filter = st.radio("Filter by crowd level", ["All","Calm","Busy","Full"], horizontal=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-
     filtered = BARS.copy()
     if crowd_filter != "All":
         filtered = filtered[filtered["Crowd"] == crowd_filter]
-
     if filtered.empty:
         st.info("No bars match this filter right now.")
     else:
         for _, row in filtered.iterrows():
             stars      = "★" * row["Ambiance"] + "☆" * (5 - row["Ambiance"])
-            crowd_html = {
-                "Calm": '<span class="badge badge-calm">🟢 Calm</span>',
-                "Busy": '<span class="badge badge-busy">🟠 Busy</span>',
-                "Full": '<span class="badge badge-full">🔴 Full</span>',
-            }.get(row["Crowd"], "")
-
+            crowd_html = {"Calm":'<span class="badge badge-calm">🟢 Calm</span>',
+                          "Busy":'<span class="badge badge-busy">🟠 Busy</span>',
+                          "Full":'<span class="badge badge-full">🔴 Full</span>'}.get(row["Crowd"],"")
             st.markdown(f"""
             <div class="bar-row">
                 <div style="flex:1">
                     <div class="bar-name">{row['Bar']}</div>
-                    <div class="bar-meta">📍 {row['Quartier']} &nbsp;·&nbsp; 
-                         🗺️ {row['Distance']} from Vélodrome</div>
+                    <div class="bar-meta">📍 {row['Quartier']} &nbsp;·&nbsp; 🗺️ {row['Distance']} from Vélodrome</div>
                     <div class="bar-stars" style="margin-top:0.3rem">{stars}</div>
                 </div>
-                <div class="bar-right">
-                    {crowd_html}
+                <div class="bar-right">{crowd_html}
                     <div style="font-size:0.7rem;color:var(--muted);margin-top:0.4rem">Ambiance {row['Ambiance']}/5</div>
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
+            </div>""", unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="section-label">Bar Map — Vélodrome Area</div>', unsafe_allow_html=True)
-    st.markdown("""
-    <div class="card" style="text-align:center;padding:2.5rem;color:var(--muted);font-size:0.8rem">
+    st.markdown("""<div class="card" style="text-align:center;padding:2.5rem;color:var(--muted);font-size:0.8rem">
         🗺️ &nbsp; Interactive map integration available in the full version
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # TAB 3 — LIVE MATCH STATS
 # ══════════════════════════════════════════════════════════════════════════════
 with tab3:
-
-    # — Scoreboard —
     st.markdown("""
     <div class="scoreboard">
         <div class="match-label">⚽ Ligue 1 · Matchday 28 · Stade Vélodrome</div>
@@ -907,100 +885,52 @@ with tab3:
             <div class="team-name right">Paris<br>Saint-Germain</div>
         </div>
         <div><span class="match-minute">⏱ 67'</span></div>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
 
-    # — Metrics row —
     st.markdown("""
     <div class="metric-grid" style="margin-bottom:1.2rem">
-        <div class="metric-cell">
-            <div class="metric-label">Shots</div>
-            <div class="metric-val">12</div>
-            <div class="metric-sub">OM &nbsp;vs&nbsp; 6 PSG</div>
-        </div>
-        <div class="metric-cell">
-            <div class="metric-label">Shots on target</div>
-            <div class="metric-val">7</div>
-            <div class="metric-sub">OM &nbsp;vs&nbsp; 3 PSG</div>
-        </div>
-        <div class="metric-cell">
-            <div class="metric-label">Corners</div>
-            <div class="metric-val">8</div>
-            <div class="metric-sub">OM &nbsp;vs&nbsp; 3 PSG</div>
-        </div>
-        <div class="metric-cell">
-            <div class="metric-label">Fouls</div>
-            <div class="metric-val">9</div>
-            <div class="metric-sub">OM &nbsp;vs&nbsp; 14 PSG</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+        <div class="metric-cell"><div class="metric-label">Shots</div><div class="metric-val">12</div><div class="metric-sub">OM vs 6 PSG</div></div>
+        <div class="metric-cell"><div class="metric-label">On Target</div><div class="metric-val">7</div><div class="metric-sub">OM vs 3 PSG</div></div>
+        <div class="metric-cell"><div class="metric-label">Corners</div><div class="metric-val">8</div><div class="metric-sub">OM vs 3 PSG</div></div>
+        <div class="metric-cell"><div class="metric-label">Fouls</div><div class="metric-val">9</div><div class="metric-sub">OM vs 14 PSG</div></div>
+    </div>""", unsafe_allow_html=True)
 
-    # — Two-column stats —
     s1, s2 = st.columns([1.2, 1], gap="large")
-
     with s1:
         st.markdown('<div class="section-label">xG — Expected Goals</div>', unsafe_allow_html=True)
-
-        xg_rows = [
-            ("OM xG",  2.1, "#009BDE", "2.1"),
-            ("PSG xG", 0.8, "#8a0000", "0.8"),
-        ]
-        for label, val, color, display in xg_rows:
+        for label, val, color, display in [("OM xG",2.1,"#009BDE","2.1"),("PSG xG",0.8,"#8a0000","0.8")]:
             pct = val / 3.0 * 100
             st.markdown(f"""
             <div class="stat-bar-wrap">
-                <div class="stat-bar-label">
-                    <span>{label}</span>
-                    <span style="color:var(--white);font-size:0.85rem">{display}</span>
-                </div>
-                <div class="stat-bar-track">
-                    <div class="stat-bar-fill" style="width:{pct:.0f}%;background:{color};
-                    box-shadow:0 0 10px {color}55;"></div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
+                <div class="stat-bar-label"><span>{label}</span><span style="color:var(--white);font-size:0.85rem">{display}</span></div>
+                <div class="stat-bar-track"><div class="stat-bar-fill" style="width:{pct:.0f}%;background:{color};box-shadow:0 0 10px {color}55;"></div></div>
+            </div>""", unsafe_allow_html=True)
         st.markdown('<div class="section-label" style="margin-top:1rem">Possession</div>', unsafe_allow_html=True)
         st.markdown("""
         <div class="stat-bar-wrap">
-            <div class="stat-bar-label">
-                <span>OM &nbsp;58%</span>
-                <span>42%&nbsp; PSG</span>
-            </div>
+            <div class="stat-bar-label"><span>OM &nbsp;58%</span><span>42%&nbsp; PSG</span></div>
             <div class="stat-bar-track" style="height:14px">
-                <div class="stat-bar-fill" style="width:58%;background:linear-gradient(90deg,#009BDE,#0070aa);
-                     box-shadow:0 0 12px rgba(0,155,222,0.5);"></div>
+                <div class="stat-bar-fill" style="width:58%;background:linear-gradient(90deg,#009BDE,#0070aa);box-shadow:0 0 12px rgba(0,155,222,0.5);"></div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        </div>""", unsafe_allow_html=True)
     with s2:
         st.markdown('<div class="section-label">Possession Split</div>', unsafe_allow_html=True)
         st.markdown("""
         <div style="display:flex;flex-direction:column;align-items:center;gap:0.8rem;padding:0.5rem 0">
-            <div style="position:relative;width:140px;height:140px;
-                        border-radius:50%;
-                        background: conic-gradient(#009BDE 0% 58%, #2a2a50 58% 100%);
+            <div style="position:relative;width:140px;height:140px;border-radius:50%;
+                        background:conic-gradient(#009BDE 0% 58%,#2a2a50 58% 100%);
                         display:flex;align-items:center;justify-content:center;">
                 <div style="position:absolute;width:88px;height:88px;background:#1a1a2e;border-radius:50%;
                              display:flex;align-items:center;justify-content:center;
-                             font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:900;
-                             color:#009BDE;">58%</div>
+                             font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:900;color:#009BDE;">58%</div>
             </div>
             <div style="display:flex;gap:1.2rem;font-family:'Barlow Condensed',sans-serif;
                         font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase">
-                <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;
-                             background:#009BDE;margin-right:0.3rem;vertical-align:middle"></span>
-                       OM 58%</span>
-                <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;
-                             background:#2a2a50;border:1px solid #555;margin-right:0.3rem;vertical-align:middle"></span>
-                       PSG 42%</span>
+                <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#009BDE;margin-right:0.3rem;vertical-align:middle"></span>OM 58%</span>
+                <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2a2a50;border:1px solid #555;margin-right:0.3rem;vertical-align:middle"></span>PSG 42%</span>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
 
-    # — AI Analysis card —
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="section-label">AI Match Analysis</div>', unsafe_allow_html=True)
     st.markdown("""
@@ -1008,70 +938,160 @@ with tab3:
         <div class="ai-tag">🤖 &nbsp; AI Analyst · Live Insight</div>
         <div class="ai-text">
             <strong>OM is dominating possession</strong> but PSG remains dangerous on counter-attacks.
-            <strong>Aubameyang's xG of 1.3</strong> suggests a goal was coming — his movement between 
-            the lines has been exceptional tonight. PSG's defensive block has conceded 
+            <strong>Aubameyang's xG of 1.3</strong> suggests a goal was coming — his movement between
+            the lines has been exceptional tonight. PSG's defensive block has conceded
             <strong>7 shots on target</strong>, their worst figure in Ligue 1 this season.
             Watch for <strong>high-press triggers</strong> in the final 20 minutes as fatigue sets in.
-            OM's wide channels are where the next goal is most likely to come from.
         </div>
         <hr class="blue-divider">
         <div style="display:flex;gap:1rem;flex-wrap:wrap">
-            <div style="background:rgba(0,155,222,0.08);border:1px solid var(--border);
-                        border-radius:8px;padding:0.5rem 0.9rem;font-size:0.72rem;color:var(--grey)">
-                📍 <strong style="color:var(--white)">Aubameyang xG: 1.3</strong>
-            </div>
-            <div style="background:rgba(0,155,222,0.08);border:1px solid var(--border);
-                        border-radius:8px;padding:0.5rem 0.9rem;font-size:0.72rem;color:var(--grey)">
-                🔥 <strong style="color:var(--white)">OM Win Probability: 74%</strong>
-            </div>
-            <div style="background:rgba(0,155,222,0.08);border:1px solid var(--border);
-                        border-radius:8px;padding:0.5rem 0.9rem;font-size:0.72rem;color:var(--grey)">
-                ⚠️ <strong style="color:var(--white)">PSG Counter Threat: High</strong>
-            </div>
+            <div style="background:rgba(0,155,222,0.08);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.9rem;font-size:0.72rem;color:var(--grey)">
+                📍 <strong style="color:var(--white)">Aubameyang xG: 1.3</strong></div>
+            <div style="background:rgba(0,155,222,0.08);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.9rem;font-size:0.72rem;color:var(--grey)">
+                🔥 <strong style="color:var(--white)">OM Win Probability: 74%</strong></div>
+            <div style="background:rgba(0,155,222,0.08);border:1px solid var(--border);border-radius:8px;padding:0.5rem 0.9rem;font-size:0.72rem;color:var(--grey)">
+                ⚠️ <strong style="color:var(--white)">PSG Counter Threat: High</strong></div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════════════════════════════════════
-# TAB 4 — PRICING
+# TAB 4 — CHANT GUIDE
 # ══════════════════════════════════════════════════════════════════════════════
 with tab4:
+    st.markdown('<div class="section-label">Virage Nord — Chant Guide</div>', unsafe_allow_html=True)
 
-    # ── Billing toggle ────────────────────────────────────────────────────────
+    col_note, _ = st.columns([2, 1])
+    with col_note:
+        st.markdown("""
+        <div style="display:flex;align-items:center;gap:0.8rem;background:rgba(255,145,0,0.07);
+                    border:1px solid rgba(255,145,0,0.3);border-radius:10px;
+                    padding:0.7rem 1.1rem;margin-bottom:1.5rem;">
+            <span style="font-size:1.1rem">🔒</span>
+            <div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.72rem;font-weight:800;
+                            letter-spacing:0.15em;text-transform:uppercase;color:#ff9100;">
+                    Marseille Exclusive — Virage Nord Only
+                </div>
+                <div style="font-size:0.75rem;color:var(--muted);margin-top:0.1rem">
+                    Ces chants sont la tradition du Virage Nord. Apprenez-les, respectez-les.
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    for chant in CHANTS:
+        lyrics_html = chant["lyrics"].replace("\n", "<br>")
+        st.markdown(f"""
+        <div class="chant-card">
+            <div class="chant-name">🎤 {chant['name']}</div>
+            <div class="chant-lyrics">{lyrics_html}</div>
+            <div class="chant-meta">
+                <span class="chant-tag">⏱ {chant['timing']}</span>
+                <span class="chant-sector">▶ {chant['sector']}</span>
+                <span class="exclusive-badge">🔒 Exclusive</span>
+            </div>
+        </div>""", unsafe_allow_html=True)
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown('<div class="section-label">Conseils pour les Ultras</div>', unsafe_allow_html=True)
+    ca, cb, cc = st.columns(3, gap="medium")
+    ultras_tips = [
+        ("🎵","Suivre le chef","Gardez l'œil sur le chef de chant du Virage Nord — il donne le tempo."),
+        ("📣","Voix forte","N'hésitez pas, la puissance vient du collectif. Chantez à pleins poumons !"),
+        ("🤝","Cohésion","Restez synchronisé avec votre voisin — la vague sonore commence par vous."),
+    ]
+    for col, (icon, title, desc) in zip([ca, cb, cc], ultras_tips):
+        with col:
+            st.markdown(f"""
+            <div class="card">
+                <div style="font-size:1.6rem;margin-bottom:0.4rem">{icon}</div>
+                <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.82rem;font-weight:800;
+                            color:var(--white);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.3rem">{title}</div>
+                <div style="font-size:0.76rem;color:var(--grey);line-height:1.5">{desc}</div>
+            </div>""", unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB 5 — FAN LIVE CHAT
+# ══════════════════════════════════════════════════════════════════════════════
+with tab5:
+    st.markdown('<div class="section-label">Live Supporter Chat — Matchday</div>', unsafe_allow_html=True)
+
+    # AI mod badge
+    st.markdown("""
+    <div class="chat-mod-badge">
+        🤖 &nbsp; AI moderation active — toxicity filtered &nbsp;·&nbsp; 0 messages removed tonight
+    </div>""", unsafe_allow_html=True)
+
+    # Chat window
+    chat_html = '<div class="chat-window">'
+    for msg in st.session_state.chat_messages:
+        chat_html += f"""
+        <div class="chat-msg">
+            <div class="chat-header">
+                <span class="chat-name">{msg['name']}</span>
+                <span class="chat-quartier">📍 {msg['quartier']}</span>
+                <span class="chat-time">{msg['time']}</span>
+            </div>
+            <div class="chat-bubble">{msg['msg']}</div>
+        </div>"""
+    chat_html += "</div>"
+    st.markdown(chat_html, unsafe_allow_html=True)
+
+    # Input row
+    st.markdown("<br>", unsafe_allow_html=True)
+    with st.form("chat_form", clear_on_submit=True):
+        inp_col, btn_col = st.columns([4, 1])
+        with inp_col:
+            new_msg = st.text_input(
+                "Votre message",
+                placeholder="Écris ton message ici... ⚽",
+                label_visibility="collapsed",
+            )
+        with btn_col:
+            send = st.form_submit_button("Envoyer →", use_container_width=True)
+
+    if send and new_msg.strip():
+        now_str = datetime.now().strftime("%H:%M")
+        st.session_state.chat_messages.append({
+            "name": "Vous",
+            "quartier": "Vélodrome",
+            "time": now_str,
+            "msg": new_msg.strip(),
+        })
+        st.rerun()
+
+    st.markdown("""
+    <div style="font-size:0.68rem;color:var(--muted);text-align:center;margin-top:0.5rem">
+        Les messages sont modérés en temps réel par l'IA · Langage respectueux uniquement
+    </div>""", unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TAB 6 — PRICING
+# ══════════════════════════════════════════════════════════════════════════════
+with tab6:
     st.markdown("""
     <div class="pricing-header">
         <div class="pricing-title">Simple, Transparent Pricing</div>
         <div class="pricing-subtitle">Start free. Upgrade when you're ready.</div>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
 
     _, toggle_col, _ = st.columns([2, 1, 2])
     with toggle_col:
-        billing = st.radio(
-            "Billing cycle",
-            options=["Monthly", "Annually"],
-            horizontal=True,
-            label_visibility="collapsed",
-        )
+        billing = st.radio("Billing", ["Monthly","Annually"], horizontal=True, label_visibility="collapsed")
 
     annually = billing == "Annually"
-    discount_note = "&nbsp; <span class='save-badge'>SAVE 20%</span>" if annually else ""
-
+    discount_note = "&nbsp;<span class='save-badge'>SAVE 20%</span>" if annually else ""
     st.markdown(f"""
     <div class="toggle-wrap" style="margin-top:-0.5rem;margin-bottom:1.5rem">
         <span style="color:{'var(--white)' if not annually else 'var(--muted)'}">Monthly</span>
         <span style="color:var(--muted)">·</span>
         <span style="color:{'var(--white)' if annually else 'var(--muted)'}">Annually{discount_note}</span>
-    </div>
-    """, unsafe_allow_html=True)
+    </div>""", unsafe_allow_html=True)
 
-    # ── Prices ────────────────────────────────────────────────────────────────
     pro_price  = "€3.19" if annually else "€3.99"
     pro_period = "/month, billed annually" if annually else "/month"
 
-    # ── Three columns ─────────────────────────────────────────────────────────
     c1, c2, c3 = st.columns(3, gap="large")
-
     with c1:
         st.markdown(f"""
         <div class="pricing-card">
@@ -1086,9 +1106,7 @@ with tab4:
             <div class="plan-feature"><span class="check">✔</span> Matchday tips &amp; alerts</div>
             <br>
             <div class="plan-cta-secondary">Get Started Free</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        </div>""", unsafe_allow_html=True)
     with c2:
         st.markdown(f"""
         <div class="pricing-card featured">
@@ -1105,9 +1123,7 @@ with tab4:
             <div class="plan-feature"><span class="check">✔</span> <strong style="color:var(--white)">AI match analyst</strong> — live commentary</div>
             <br>
             <div class="plan-cta-primary">Start Pro →</div>
-        </div>
-        """, unsafe_allow_html=True)
-
+        </div>""", unsafe_allow_html=True)
     with c3:
         st.markdown(f"""
         <div class="pricing-card">
@@ -1123,44 +1139,29 @@ with tab4:
             <div class="plan-feature"><span class="icon">🔗</span> <strong style="color:var(--white)">API access</strong> — integrate with your systems</div>
             <br>
             <div class="plan-cta-secondary">Contact Us</div>
-        </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
 
-    # ── Feature comparison table ───────────────────────────────────────────────
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown('<div class="section-label">Full Feature Comparison</div>', unsafe_allow_html=True)
-
     comparison = {
-        "Feature":                    ["Smart Transport", "Bar Finder", "Live Stats", "Expert xG & Heatmaps",
-                                       "Fan Chat", "Chant Guide", "AI Match Analyst", "Bar Dashboard",
-                                       "Matchday Ads", "API Access"],
-        "Free":                       ["✔", "✔", "Basic", "—", "—", "—", "—", "—", "—", "—"],
-        "Pro":                        ["✔", "✔", "Full", "✔", "✔", "✔", "✔", "—", "—", "—"],
-        "Business":                   ["✔", "✔", "Full", "✔", "✔", "✔", "✔", "✔", "✔", "✔"],
+        "Feature":   ["Smart Transport","Bar Finder","Live Stats","Expert xG & Heatmaps",
+                      "Fan Chat","Chant Guide","AI Match Analyst","Bar Dashboard","Matchday Ads","API Access"],
+        "Free":      ["✔","✔","Basic","—","—","—","—","—","—","—"],
+        "Pro":       ["✔","✔","Full","✔","✔","✔","✔","—","—","—"],
+        "Business":  ["✔","✔","Full","✔","✔","✔","✔","✔","✔","✔"],
     }
-    import pandas as pd
-    comp_df = pd.DataFrame(comparison)
-    st.dataframe(comp_df, use_container_width=True, hide_index=True)
+    st.dataframe(pd.DataFrame(comparison), use_container_width=True, hide_index=True)
 
-    # ── FAQ ───────────────────────────────────────────────────────────────────
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown('<div class="section-label">FAQ</div>', unsafe_allow_html=True)
-
-    faqs = [
-        ("Can I cancel anytime?",
-         "Yes. Pro subscriptions can be cancelled at any time from your account settings. "
-         "You keep access until the end of your billing period."),
-        ("Is there a free trial for Pro?",
-         "Absolutely — new users get 14 days of Pro for free, no credit card required."),
-        ("What payment methods do you accept?",
-         "We accept Visa, Mastercard, and PayPal. Business plans can be invoiced monthly."),
-        ("How does the annual discount work?",
-         "Choosing annual billing gives you 2 months free — you pay for 10 months and get 12."),
-    ]
-    for q, a in faqs:
+    for q, a in [
+        ("Can I cancel anytime?","Yes. Pro subscriptions can be cancelled at any time. You keep access until the end of your billing period."),
+        ("Is there a free trial for Pro?","New users get 14 days of Pro for free — no credit card required."),
+        ("What payment methods do you accept?","We accept Visa, Mastercard, and PayPal. Business plans can be invoiced monthly."),
+        ("How does the annual discount work?","Annual billing gives you 2 months free — you pay for 10 months and get 12."),
+    ]:
         st.markdown(f"""
         <div class="faq-item">
             <div class="faq-q">Q — {q}</div>
             <div class="faq-a">{a}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        </div>""", unsafe_allow_html=True)
